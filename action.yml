@@ -1,0 +1,53 @@
+name: WritersLogic Pre-merge Review
+description: Pay-per-PR exploit, secret, dependency and Trojan Source review with a signed, verifiable verdict.
+author: WritersLogic
+branding:
+  icon: shield
+  color: blue
+inputs:
+  agent:
+    description: "pre-merge-review (gatekeeper + Unicode gate), diff-gatekeeper, or unicode-safety-gate"
+    default: pre-merge-review
+  api-key:
+    description: Hub API key (X-API-KEY). Either this or wallet-private-key is required.
+    required: false
+  wallet-private-key:
+    description: Base wallet key holding USDC; pays each call with x402 (no gas). Store it as a secret.
+    required: false
+  max-usdc-per-call:
+    description: Refuse to pay more than this per call.
+    default: "1.00"
+  base-ref:
+    description: Ref to diff against. Defaults to the pull request base branch.
+    required: false
+  fail-on:
+    description: "block (fail only when the merge is not approved), warn (also fail on Unicode warnings), or never"
+    default: block
+  hub-url:
+    description: Hub base URL.
+    default: https://agents.writerslogic.com
+outputs:
+  merge-approved:
+    description: "true or false"
+    value: ${{ steps.review.outputs.merge-approved }}
+  report:
+    description: Path to the full signed JSON response.
+    value: ${{ steps.review.outputs.report }}
+runs:
+  using: composite
+  steps:
+    - name: Install client
+      shell: bash
+      run: npm install --prefix "$GITHUB_ACTION_PATH" --no-save --no-audit --no-fund --loglevel=error @writerslogic/ai-agents-mcp@0.1.0
+    - name: Review diff
+      id: review
+      shell: bash
+      env:
+        WL_AGENT: ${{ inputs.agent }}
+        AGENTS_API_KEY: ${{ inputs.api-key }}
+        AGENT_PRIVATE_KEY: ${{ inputs.wallet-private-key }}
+        MAX_USDC_PER_CALL: ${{ inputs.max-usdc-per-call }}
+        WL_BASE_REF: ${{ inputs.base-ref }}
+        WL_FAIL_ON: ${{ inputs.fail-on }}
+        AGENTS_BASE_URL: ${{ inputs.hub-url }}
+      run: node "$GITHUB_ACTION_PATH/run.mjs"
