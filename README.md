@@ -24,4 +24,17 @@ jobs:
 
 Payment: either `wallet-private-key` (a dedicated wallet holding a little USDC on Base; each call is an x402 `exact` authorization capped by `max-usdc-per-call`) or `api-key` (a hub API key). Store both as secrets. Diffs over 900 KB are refused before any payment.
 
-Outputs: `merge-approved` (`true`/`false`) and `report` (path of the signed JSON). The job summary lists blockers, findings and Unicode rule hits.
+Outputs: `merge-approved` (`true`/`false`), `verdict` (`pass`/`warn`/`block`) and `report` (path of the signed JSON). The job summary lists blockers, findings and Unicode rule hits.
+
+## Repository agents
+
+The same action also runs agents that read the checkout instead of the PR diff, so they work on `push`, `schedule` and `workflow_dispatch` too. Each has its own focused listing:
+
+| `agent` | What it checks | Price | Listing |
+|---|---|---|---|
+| `cra-exploit-clock` | SBOM components with exploitation evidence (CISA KEV, ENISA EUVD) and the EU Cyber Resilience Act Art. 14 reporting deadlines | $2.00 | [writerslogic/cra-exploit-clock](https://github.com/writerslogic/cra-exploit-clock) |
+| `dependency-advisor` | Vulnerable, deprecated, stale, unused and replaceable npm, PyPI and Cargo dependencies | $1.00 | [writerslogic/dependency-health-review](https://github.com/writerslogic/dependency-health-review) |
+| `ai-bom-license-resolver` | License conflicts across the Hugging Face models and datasets your code loads, for your actual use | $0.50 | [writerslogic/hf-model-license-check](https://github.com/writerslogic/hf-model-license-check) |
+| `reference-verifier` | Retracted, nonexistent and mismatched references in your .bib files | $1.50 | [writerslogic/citation-retraction-check](https://github.com/writerslogic/citation-retraction-check) |
+
+Set `max-usdc-per-call` at or above the agent's price when paying with a wallet. The inputs for each agent are listed in `action.yml`.

@@ -6,7 +6,7 @@ branding:
   color: blue
 inputs:
   agent:
-    description: "pre-merge-review (gatekeeper + Unicode gate), diff-gatekeeper, or unicode-safety-gate"
+    description: "PR diff agents: pre-merge-review (gatekeeper + Unicode gate), diff-gatekeeper, unicode-safety-gate. Repository agents: cra-exploit-clock, dependency-advisor, ai-bom-license-resolver, reference-verifier"
     default: pre-merge-review
   api-key:
     description: Hub API key (X-API-KEY). Either this or wallet-private-key is required.
@@ -26,10 +26,67 @@ inputs:
   hub-url:
     description: Hub base URL.
     default: https://agents.writerslogic.com
+  sbom-path:
+    description: "cra-exploit-clock: CycloneDX or SPDX JSON SBOM path. Defaults to the first *.cdx.json, *.spdx.json, sbom*.json or bom*.json in the repository."
+    required: false
+  product-name:
+    description: "cra-exploit-clock: product name for the draft notification (defaults to the SBOM's)."
+    required: false
+  product-version:
+    description: "cra-exploit-clock: product version for the draft notification."
+    required: false
+  awareness-time:
+    description: "cra-exploit-clock: when you became aware, ISO 8601 with UTC offset. Defaults to the time of each run, which restarts the 24 h and 72 h clocks on every run."
+    required: false
+  fix-available-at:
+    description: "cra-exploit-clock: when a fix or mitigation became available, ISO 8601; sets the final-report date."
+    required: false
+  include-source:
+    description: "dependency-advisor: upload tracked JS/TS/Python/Rust source files (up to 300) so usage can be analysed. Without them every dependency looks unused and advisories are not reported."
+    default: "true"
+  repo-license:
+    description: "dependency-advisor: SPDX id of the repository license (detected when absent)."
+    required: false
+  mode:
+    description: "dependency-advisor: auto (at most one model call) or deterministic (none)."
+    default: "auto"
+  models:
+    description: "ai-bom-license-resolver: Hugging Face model ids, comma separated. Defaults to the ids referenced in code and config."
+    required: false
+  datasets:
+    description: "ai-bom-license-resolver: extra Hugging Face dataset ids, comma separated."
+    required: false
+  commercial:
+    description: "ai-bom-license-resolver: required, true or false. Any commercial activity connected to the use."
+    required: false
+  distribution:
+    description: "ai-bom-license-resolver: required. api (hosted service), weights (you redistribute weights) or on_prem (internal only)."
+    required: false
+  fine-tune:
+    description: "ai-bom-license-resolver: true if you fine-tune, merge or quantize the models."
+    default: "false"
+  monthly-active-users:
+    description: "ai-bom-license-resolver: monthly active users, for user-count clauses such as Llama's."
+    required: false
+  jurisdiction:
+    description: "ai-bom-license-resolver: ISO 3166-1 alpha-2 country of the licensee, for regional clauses."
+    required: false
+  bib-path:
+    description: "reference-verifier: .bib files, comma separated. Defaults to every tracked .bib file."
+    required: false
+  manuscript-path:
+    description: "reference-verifier: optional LaTeX or text manuscript that supplies citation contexts."
+    required: false
+  check-support:
+    description: "reference-verifier: with manuscript-path, judge whether each cited abstract supports its citing sentence (one model call)."
+    default: "false"
 outputs:
   merge-approved:
     description: "true or false"
     value: ${{ steps.review.outputs.merge-approved }}
+  verdict:
+    description: "pass, warn or block"
+    value: ${{ steps.review.outputs.verdict }}
   report:
     description: Path to the full signed JSON response.
     value: ${{ steps.review.outputs.report }}
@@ -39,7 +96,7 @@ runs:
     - name: Install client
       shell: bash
       run: npm install --prefix "$GITHUB_ACTION_PATH" --no-save --no-audit --no-fund --loglevel=error @writerslogic/ai-agents-mcp@0.1.0
-    - name: Review diff
+    - name: Run agent
       id: review
       shell: bash
       env:
@@ -50,4 +107,22 @@ runs:
         WL_BASE_REF: ${{ inputs.base-ref }}
         WL_FAIL_ON: ${{ inputs.fail-on }}
         AGENTS_BASE_URL: ${{ inputs.hub-url }}
+        WL_SBOM_PATH: ${{ inputs.sbom-path }}
+        WL_PRODUCT_NAME: ${{ inputs.product-name }}
+        WL_PRODUCT_VERSION: ${{ inputs.product-version }}
+        WL_AWARENESS_TIME: ${{ inputs.awareness-time }}
+        WL_FIX_AVAILABLE_AT: ${{ inputs.fix-available-at }}
+        WL_INCLUDE_SOURCE: ${{ inputs.include-source }}
+        WL_REPO_LICENSE: ${{ inputs.repo-license }}
+        WL_MODE: ${{ inputs.mode }}
+        WL_MODELS: ${{ inputs.models }}
+        WL_DATASETS: ${{ inputs.datasets }}
+        WL_COMMERCIAL: ${{ inputs.commercial }}
+        WL_DISTRIBUTION: ${{ inputs.distribution }}
+        WL_FINE_TUNE: ${{ inputs.fine-tune }}
+        WL_MAU: ${{ inputs.monthly-active-users }}
+        WL_JURISDICTION: ${{ inputs.jurisdiction }}
+        WL_BIB_PATH: ${{ inputs.bib-path }}
+        WL_MANUSCRIPT_PATH: ${{ inputs.manuscript-path }}
+        WL_CHECK_SUPPORT: ${{ inputs.check-support }}
       run: node "$GITHUB_ACTION_PATH/run.mjs"
