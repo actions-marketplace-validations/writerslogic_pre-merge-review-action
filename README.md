@@ -1,4 +1,4 @@
-# WritersLogic Pre-merge Review (GitHub Action)
+# Unicode Safety & Signed PR Review (GitHub Action)
 
 Reviews each pull request's diff with the WritersLogic agent hub and fails the check when the merge is unsafe:
 

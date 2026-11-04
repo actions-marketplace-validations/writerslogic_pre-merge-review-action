@@ -1,5 +1,5 @@
-name: WritersLogic Pre-merge Review
-description: Pay-per-PR exploit, secret, dependency and Trojan Source review with a signed, verifiable verdict.
+name: Unicode Safety & Signed PR Review
+description: Blocks Trojan Source bidi tricks, invisible characters and homoglyphs in PRs, plus an AI merge review with a signed verdict.
 author: WritersLogic
 branding:
   icon: shield
